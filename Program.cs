@@ -44,6 +44,10 @@ namespace OpenGL
 
 		private static void Window_UpdateFrame(object sender, FrameEventArgs e)
 		{
+
+			if (window.Keyboard[OpenTK.Input.Key.Escape])
+				window.Exit();
+
 			//axis one of the joystick rotates about y-axis
 			float yrot = (window.Keyboard[Key.Right]) ? 1.0f : (window.Keyboard[Key.Left]) ? -1.0f : 0.0f;
 			float xrot = (window.Keyboard[Key.Up]) ? 1.0f : (window.Keyboard[Key.Down]) ? -1.0f : 0.0f;
@@ -81,20 +85,23 @@ namespace OpenGL
 			string vertexShaderCode = @"
 #version 330 core
 layout(location=0) in vec3 vertexPosition_modelspace;
+out float invdepth;
 uniform mat4 modelTransform;
 uniform mat4 viewTransform;
 uniform mat4 perspectiveTransform;
 void main()
 {
 	gl_Position = perspectiveTransform * viewTransform * modelTransform * vec4(vertexPosition_modelspace, 1.0);
+	invdepth = clamp(2.0 / pow(gl_Position.z, 2) + 0.3, 0.0, 1.0);
 }
 ";
 			string fragmentShaderCode = @"
 #version 330 core
+in float invdepth;
 out vec3 color;
 void main()
 {
-color = vec3(1.0, 0.0, 0.0);
+	color = vec3(invdepth, invdepth, invdepth);
 }
 ";
 			GL.ShaderSource(vertexShaderID, vertexShaderCode);
@@ -117,22 +124,20 @@ color = vec3(1.0, 0.0, 0.0);
 			GL.DeleteShader(vertexShaderID);
 			GL.DeleteShader(fragmentShaderID);
 
+			GL.Enable(EnableCap.DepthTest);
+			GL.DepthFunc(DepthFunction.Less);
 			
-			
+			GL.PolygonMode(MaterialFace.Back, PolygonMode.Line);
+			GL.PolygonMode(MaterialFace.Front, PolygonMode.Line);
+			GL.LineWidth(2.0f);
 
 		}
 
 		private static void Window_RenderFrame(object sender, FrameEventArgs e)
 		{
-			if (window.Keyboard[OpenTK.Input.Key.Escape])
-				window.Exit();
-
-			GL.PolygonMode(MaterialFace.Back, PolygonMode.Line);
-			GL.PolygonMode(MaterialFace.Front, PolygonMode.Line);
-			GL.LineWidth(2.0f);
 
 			window.MakeCurrent();
-			GL.Clear(ClearBufferMask.ColorBufferBit);
+			GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 			GL.EnableVertexAttribArray(0);
 			GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBuffer);
 			GL.VertexAttribPointer(
