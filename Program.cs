@@ -61,7 +61,7 @@ namespace OpenGL
 		private static void Window_Load(object sender, EventArgs e)
 		{
 
-			SceneObject cubeHat = new SceneObject("cubehat.obj");
+			SceneObject cubeHat = new SceneObject("zonebox.obj");
 
 			var vertices = cubeHat.GetVertexList();
 			numVertices = vertices.Length;
